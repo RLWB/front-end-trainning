@@ -336,7 +336,7 @@ Changes to be committed:
 ```shell
 git status -s
 MM git-scm.md
-?? index.js
+   index.js
 ```
 
 新添加的未跟踪文件前面有 `??` 标记，新添加到暂存区中的文件前面有 `A` 标记，修改过的文件前面有 `M` 标记。 输出中有两栏，左栏指明了暂存区的状态，右栏指明了工作区的状态。 `git-scm.md` 文件已修，暂存后又作了修改，因此该文件的修改中既有已暂存的部分，又有未暂存的部分。
@@ -344,3 +344,290 @@ MM git-scm.md
 #### 忽略文件
 
 一般我们总会有些文件无需纳入 Git 的管理，也不希望它们总出现在未跟踪文件列表。 通常都是些自动生成的文件，比如日志文件，或者编译过程中创建的临时文件等。 在这种情况下，我们可以创建一个名为 `.gitignore` 的文件，列出要忽略的文件的模式。 来看一个实际的 `.gitignore` 例子：
+
+#### 查看已暂存和未暂存的修改
+
+如果 `git status` 命令的输出对于你来说过于简略，而你想知道具体修改了什么地方，可以用 `git diff` 命令。 你通常可能会用它来回答这两个问题：当前做的哪些更新尚未暂存？ 有哪些更新已暂存并准备好下次提交？ 虽然 `git status` 已经通过在相应栏下列出文件名的方式回答了这个问题，但 `git diff` 能通过文件补丁的格式更加具体地显示哪些行发生了改变。
+
+假如再次修改 `inde.js`文件后暂存，然后编辑 `index.html` 文件后先不暂存， 运行 `git status` 命令将会看到：
+
+```shell
+ git status
+On branch test
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        modified:   index.js
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   index.html
+```
+
+要查看尚未暂存的文件更新了哪些部分，不加参数直接输入 `git diff`：
+
+```shell
+git diff
+diff --git a/index.html b/index.html
+index 1348707..a6503c5 100644
+--- a/index.html
++++ b/index.html
+@@ -1,5 +1,2 @@
+ html
+ test
+-test
+-html
+-html
+```
+
+此命令比较的是工作目录中当前文件和暂存区域快照之间的差异。 也就是修改之后还没有暂存起来的变化内容。
+
+若要查看已暂存的将要添加到下次提交里的内容，可以用 `git diff --staged` 命令。 这条命令将比对已暂存文件与最后一次提交的文件差异：
+
+```shell
+ git diff --staged
+diff --git a/index.js b/index.js
+index 3a53a26..da74bb6 100644
+--- a/index.js
++++ b/index.js
+@@ -1,15 +1,2 @@
+ console.log(_)
+ console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-console.log(_)
+-
+-
+```
+
+请注意，git diff 本身只显示尚未暂存的改动，而不是自上次提交以来所做的所有改动。 所以有时候你一下子暂存了所有更新过的文件，运行 `git diff` 后却什么也没有，就是这个原因。
+
+我们使用 `git diff` 来分析文件差异。 但是你也可以使用图形化的工具或外部 diff 工具来比较差异。 可以使用 `git difftool` 命令来调用 emerge 或 vimdiff 等软件（包括商业软件）输出 diff 的分析结果。 使用 `git difftool --tool-help` 命令来看你的系统支持哪些 Git Diff 插件。
+
+#### 提交更新
+
+现在的暂存区已经准备就绪，可以提交了。 在此之前，请务必确认还有什么已修改或新建的文件还没有 `git add` 过， 否则提交的时候不会记录这些尚未暂存的变化。 这些已修改但未暂存的文件只会保留在本地磁盘。 所以，每次准备提交前，先用 `git status` 看下，你所需要的文件是不是都已暂存起来了， 然后再运行提交命令 `git commit` -m '****'：
+
+```shell
+git commit -m 'xxxx'
+```
+
+#### 跳过使用暂存区
+
+尽管使用暂存区域的方式可以精心准备要提交的细节，但有时候这么做略显繁琐。 Git 提供了一个跳过使用暂存区域的方式， 只要在提交的时候，给 `git commit` 加上 `-a` 选项，Git 就会自动把所有已经跟踪过的文件暂存起来一并提交，从而跳过 `git add` 步骤：
+
+```
+git commit -a -m 'XXXX' || git commit -am 'XXXX'
+```
+
+#### 移除文件
+
+要从 Git 中移除某个文件，就必须要从已跟踪文件清单中移除（确切地说，是从暂存区域移除），然后提交。 可以用 `git rm` 命令完成此项工作，并连带从工作目录中删除指定的文件，这样以后就不会出现在未跟踪文件清单中了。
+
+如果只是简单地从工作目录中手工删除`index.js`文件，运行 `git status` 时就会在 “Changes not staged for commit” 部分（也就是 *未暂存清单*）看到：
+
+```shell
+ git status
+On branch test
+Changes not staged for commit:
+  (use "git add/rm <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        deleted:    index.js
+
+no changes added to commit (use "git add" and/or "git commit -a")
+```
+
+然后再运行 `git rm` 记录此次移除文件的操作：
+
+```shell
+git rm index.js
+rm 'index.js'
+git status
+On branch test
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        deleted:    index.js
+
+```
+
+下一次提交时，该文件就不再纳入版本管理了。 如果要删除之前修改过或已经放到暂存区的文件，则必须使用强制删除选项 `-f`（译注：即 force 的首字母）。 这是一种安全特性，用于防止误删尚未添加到快照的数据，这样的数据不能被 Git 恢复。
+
+另外一种情况是，我们想把文件从 Git 仓库中删除（亦即从暂存区域移除），但仍然希望保留在当前工作目录中。 换句话说，你想让文件保留在磁盘，但是并不想让 Git 继续跟踪。 当你忘记添加 `.gitignore` 文件，不小心把一个很大的日志文件或一堆 `.a` 这样的编译生成文件添加到暂存区时，这一做法尤其有用。 为达到这一目的，使用 `--cached` 选项：
+
+```shell
+git rm --cached index.js
+```
+
+#### 移动文件
+
+要在 Git 中对文件改名，可以这么做：
+
+```shell
+git mv file_from file_to
+```
+
+```shell
+git mv index.js index.ts
+git status
+On branch test
+Changes to be committed:
+  (use "git restore --staged <file>..." to unstage)
+        renamed:    index.js -> index.ts
+```
+
+### 2.3 查看提交历史
+
+在提交了若干更新，又或者克隆了某个项目之后，你也许想回顾下提交历史。 完成这个任务最简单而又有效的工具是 `git log` 命令。
+
+当你在此项目中运行 `git log` 命令时，可以看到类似下面的输出：
+
+```shell
+git log
+commit 5335d8c71ec66e1fab9329193717468720e1e522 (HEAD -> test)
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Tue Nov 30 22:18:15 2021 +0800
+
+    un
+
+commit f35c7f32a4a78d619eb32affa9521b4b3c97e643
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Thu Jul 29 23:17:28 2021 +0800
+
+    2 & rebase & amend
+
+commit 2f2c841f0798332d1beb5246b6dc8a2cccc9bb0e
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Thu Jul 29 23:17:05 2021 +0800
+
+    dsad
+
+commit 45b28fd738696f2b09e9692883b91e630a850bda
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Thu Jul 29 23:15:13 2021 +0800
+
+    init
+```
+
+不传入任何参数的默认情况下，`git log` 会按时间先后顺序列出所有的提交，最近的更新排在最上面。 正如你所看到的，这个命令会列出每个提交的 SHA-1 校验和、作者的名字和电子邮件地址、提交时间以及提交说明。
+
+`git log` 有许多选项可以帮助你搜寻你所要找的提交， 下面介绍几个最常用的选项。
+
+其中一个比较有用的选项是 `-p` 或 `--patch` ，它会显示每次提交所引入的差异（按 **补丁** 的格式输出）。 你也可以限制显示的日志条目数量，例如使用 `-2` 选项来只显示最近的两次提交：
+
+```shell
+λ git log -p -2
+commit 5335d8c71ec66e1fab9329193717468720e1e522 (HEAD -> test)
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Tue Nov 30 22:18:15 2021 +0800
+
+    un
+
+diff --git a/index.html b/index.html
+index 1348707..a6503c5 100644
+--- a/index.html
++++ b/index.html
+@@ -1,5 +1,2 @@
+ html
+ test
+-test
+-html
+-html
+
+commit f35c7f32a4a78d619eb32affa9521b4b3c97e643
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Thu Jul 29 23:17:28 2021 +0800
+
+    2 & rebase & amend
+
+diff --git a/index.html b/index.html
+index d952eaa..1348707 100644
+--- a/index.html
++++ b/index.html
+@@ -1,2 +1,5 @@
+ html
++test
++test
++html
+ html
+(END)
+```
+
+你想看到每次提交的简略统计信息，可以使用 `--stat` 选项：
+
+```shell
+ git log --stat
+commit 5335d8c71ec66e1fab9329193717468720e1e522 (HEAD -> test)
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Tue Nov 30 22:18:15 2021 +0800
+
+    un
+
+ index.html | 3 ---
+ 1 file changed, 3 deletions(-)
+
+commit f35c7f32a4a78d619eb32affa9521b4b3c97e643
+Author: rlwb <rlwb1017669154@gmail.com>
+Date:   Thu Jul 29 23:17:28 2021 +0800
+
+    2 & rebase & amend
+
+ index.html | 3 +++
+ 1 file changed, 3 insertions(+)
+```
+
+正如你所看到的，`--stat` 选项在每次提交的下面列出所有被修改过的文件、有多少文件被修改了以及被修改过的文件的哪些行被移除或是添加了。 在每次提交的最后还有一个总结
+
+另一个非常有用的选项是 `--pretty`。 这个选项可以使用不同于默认格式的方式展示提交历史。 这个选项有一些内建的子选项供你使用。 比如 `oneline` 会将每个提交放在一行显示，在浏览大量的提交时非常有用。 另外还有 `short`，`full` 和 `fuller` 选项，它们展示信息的格式基本一致，但是详尽程度不一：
+
+```shell
+git log --pretty=oneline
+5335d8c71ec66e1fab9329193717468720e1e522 (HEAD -> test) un
+f35c7f32a4a78d619eb32affa9521b4b3c97e643 2 & rebase & amend
+2f2c841f0798332d1beb5246b6dc8a2cccc9bb0e dsad
+45b28fd738696f2b09e9692883b91e630a850bda init
+```
+
+`log` 选项 `--graph` 结合使用时尤其有用。 这个选项添加了一些 ASCII 字符串来形象地展示你的分支、合并历史：
+
+```shell
+git log --graph
+*   commit 827639334f4717ee189e5f877acb043f000defe8 (HEAD -> test)
+|\  Merge: def4aba 80eb03b
+| | Author: rlwb <rlwb1017669154@gmail.com>
+| | Date:   Tue Nov 30 22:44:16 2021 +0800
+| |
+| |     merge
+| |
+| * commit 80eb03b03d7af695ed1f833e0976e86e33d1d59b (master)
+| | Author: rlwb <rlwb1017669154@gmail.com>
+| | Date:   Fri Jul 30 00:12:43 2021 +0800
+| |
+| |     finished
+| |
+| * commit fd4038e5c73f91469feb9753d26ea47afefa237e
+| | Author: rlwb <rlwb1017669154@gmail.com>
+| | Date:   Thu Jul 29 23:21:17 2021 +0800
+| |
+| |     rebase
+| |
+| * commit 9d92f59615874c8a7e4a3f69d10729b80802e2ee
+| | Author: rlwb <rlwb1017669154@gmail.com>
+| | Date:   Thu Jul 29 23:17:28 2021 +0800
+| |
+| |     2
+```
+
+后面我们会在分支合并章节讲解
+
+git log还有其他更多有趣的组合，感兴趣的同学可以课后google一下。
+
+#### git撤销操作
+
