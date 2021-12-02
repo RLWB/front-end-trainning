@@ -1212,3 +1212,115 @@ If you are sure you want to delete it, run 'git branch -D testing'.
 
 ### 3.4 远程分支
 
+在你明确地决定将一个本地分支发布到远程仓库之前，这些在你本地计算机上创建的分支是不能被其他的团队成员看到的，它只是你的私有分支。这就意味着，你可以保留某些改动仅仅在你私有的本地分支上，而与其他团队成员分享一些其它分支上的改动。
+
+#### 推送
+
+要把本地分支推送到远程仓库，我们可以执行如下操作：
+
+```shell
+git push -u origin branch-name
+```
+
+这个 “-u” 参数会自动地在你本地的分支和新建的远程分支之间创建一个 “跟踪” 链接。执行 `git branch -vva` 命令来显示分支信息，并且附带上一些特定的参数，在方括号中就会显示出这个建立的跟踪联系：
+
+```shell
+git branch -vva
+* contact-form           56eddd1 [origin/contact-form] Add new contact..
+  faq-content            814927a [crash-course-remote/faq-content: ahead
+                                    1] Add new question
+  master                 2dfe283 Implement the new login box
+  remotes/crash-course-remote/faq-content e29fb3f Add FAQ questions
+  remotes/crash-course-remote/master      2b504be Change headlines f...
+  remotes/origin/contact-form             56eddd1 Add new contact fo...
+  remotes/origin/master  56eddd1 Add new contact form page
+```
+
+当创建了这个新的远程分支后，发布新的本地提交将会非常简单，执行 “git push” 命令就完成这个操作。
+
+#### 拉取
+
+协作者从服务器上抓取数据时，他们会在本地生成一个远程分支 `origin/serverfix`，指向服务器的 `serverfix` 分支的引用：
+
+```shell
+git fetch origin
+remote: Counting objects: 7, done.
+remote: Compressing objects: 100% (2/2), done.
+remote: Total 3 (delta 0), reused 3 (delta 0)
+Unpacking objects: 100% (3/3), done.
+From https://github.com/schacon/simplegit
+ * [new branch]      serverfix    -> origin/serverfix
+```
+
+要特别注意的一点是当抓取到新的远程跟踪分支时，本地不会自动生成一份可编辑的副本（拷贝）。 换一句话说，这种情况下，不会有一个新的 `serverfix` 分支——只有一个不可以修改的 `origin/serverfix` 指针。
+
+可以运行 `git merge origin/serverfix` 将这些工作合并到当前所在的分支。 如果想要在自己的 `serverfix` 分支上工作，可以将其建立在远程跟踪分支之上：
+
+```shell
+git switch -c serverfix origin/serverfix
+Branch serverfix set up to track remote branch serverfix from origin.
+Switched to a new branch 'serverfix'
+```
+
+这会给你一个用于工作的本地分支，并且起点位于 `origin/serverfix`。
+
+当 `git fetch` 命令从服务器上抓取本地没有的数据时，它并不会修改工作目录中的内容。 它只会获取数据然后让你自己合并。 然而，有一个命令叫作 `git pull` 在大多数情况下它的含义是一个 `git fetch` 紧接着一个 `git merge` 命令。 如果有一个像之前章节中演示的设置好的跟踪分支，不管它是显式地设置还是通过 `clone` 或 `checkout` 命令为你创建的，`git pull` 都会查找当前分支所跟踪的服务器与分支， 从服务器上抓取数据然后尝试合并入那个远程分支。
+
+由于 `git pull` 的魔法经常令人困惑所以通常单独显式地使用 `fetch` 与 `merge` 命令会更好一些。
+
+#### 删除远程分支
+
+假设你已经通过远程分支做完所有的工作了——也就是说你和你的协作者已经完成了一个特性， 并且将其合并到了远程仓库的 `master` 分支（或任何其他稳定代码分支）。 可以运行带有 `--delete` 选项的 `git push` 命令来删除一个远程分支。 如果想要从服务器上删除 `serverfix` 分支，运行下面的命令：
+
+```shell
+git push origin --delete serverfix
+To https://github.com/schacon/simplegit
+ - [deleted]         serverfix
+```
+
+### 3.5 变基
+
+在 Git 中整合来自不同分支的修改主要有两种方法：`merge` 以及 `rebase`。我们将学习什么是“变基”，怎样使用“变基”，并将展示该操作的惊艳之处，以及指出在何种情况下你应避免使用它。
+
+#### 变基的基本操作
+
+请回顾之前在 分支合并 中的一个例子，你会看到开发任务分叉到两个不同分支，又各自提交了更新。
+
+![分叉的提交历史。](assets/basic-rebase-1.png)
+
+之前介绍过，整合分支最容易的方法是 `merge` 命令。 它会把两个分支的最新快照（`C3` 和 `C4`）以及二者最近的共同祖先（`C2`）进行三方合并，合并的结果是生成一个新的快照（并提交）
+
+![通过合并操作来整合分叉了的历史。](assets/basic-rebase-2.png)
+
+其实，还有一种方法：你可以提取在 `C4` 中引入的补丁和修改，然后在 `C3` 的基础上应用一次。 在 Git 中，这种操作就叫做 **变基（rebase）**。 你可以使用 `rebase` 命令将提交到某一分支上的所有修改都移至另一分支上，就好像“重新播放”一样。
+
+在这个例子中，你可以检出 `experiment` 分支，然后将它变基到 `master` 分支上：
+
+```shell
+git switch experiment
+git rebase master
+First, rewinding head to replay your work on top of it...
+Applying: added staged command
+```
+
+它的原理是首先找到这两个分支（即当前分支 `experiment`、变基操作的目标基底分支 `master`） 的最近共同祖先 `C2`，然后对比当前分支相对于该祖先的历次提交，提取相应的修改并存为临时文件， 然后将当前分支指向目标基底 `C3`, 最后以此将之前另存为临时文件的修改依序应用。 
+
+![将 `C4` 中的修改变基到 `C3` 上。](assets/basic-rebase-3.png)
+
+现在回到 `master` 分支，进行一次快进合并。
+
+```shell
+git checkout master
+git merge experiment
+```
+
+![`master` 分支的快进合并。](assets/basic-rebase-4.png)
+
+此时，`C4'` 指向的快照就和 上面`C5` 指向的快照一模一样了。 这两种整合方法的最终结果没有任何区别，但是变基使得提交历史更加整洁。 你在查看一个经过变基的分支的历史记录时会发现，尽管实际的开发工作是并行的， 但它们看上去就像是串行的一样，提交历史是一条直线没有分叉。
+
+一般我们这样做的目的是为了确保在向远程分支推送时能保持提交历史的整洁——例如向某个其他人维护的项目贡献代码时。 在这种情况下，你首先在自己的分支里进行开发，当开发完成时你需要先将你的代码变基到 `origin/master` 上，然后再向主项目提交修改。 这样的话，该项目的维护者就不再需要进行整合工作，只需要快进合并便可。
+
+请注意，无论是通过变基，还是通过三方合并，整合的最终结果所指向的快照始终是一样的，只不过提交历史不同罢了。 变基是将一系列提交按照原有次序依次应用到另一分支上，而合并是把最终结果合在一起。
+
+总的原则是，只对尚未推送或分享给别人的本地修改执行变基操作清理历史， 从不对已推送至别处的提交执行变基操作，这样，你才能享受到两种方式带来的便利
+
