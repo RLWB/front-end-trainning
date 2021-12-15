@@ -559,3 +559,480 @@ function Garage() {
 
 ReactDOM.render(<Garage />, document.getElementById('root'));
 ```
+
+## 使用css
+
+React里面使用css的方式有很多，下面主要说一下常用的三种：
+
+- 内联样式
+- CSS 样式表
+- CSS 模块
+
+### 内联样式
+
+要使用内联样式属性设置元素样式，该值必须是 JavaScript 对象：
+
+```jsx
+const Header = () => {
+  return (
+    <>
+      <h1 style={{color: "red"}}>Hello Style!</h1>
+      <p>Add a little style!</p>
+    </>
+  );
+}
+```
+
+**注意：**在 JSX 中，JavaScript 表达式写在花括号内，并且由于 JavaScript 对象也使用花括号，因此上面示例中的样式写在两组花括号内`{{}}`。
+
+#### 驼峰式属性名称
+
+由于内联 CSS 是在 JavaScript 对象中编写的，因此带有连字符分隔符的属性，例如`background-color`，必须使用驼峰式语法编写：
+
+```jsx
+const Header = () => {
+  return (
+    <>
+      <h1 style={{backgroundColor: "lightblue"}}>Hello Style!</h1>
+      <p>Add a little style!</p>
+    </>
+  );
+}
+```
+
+#### JavaScript 对象
+
+您还可以创建一个带有样式信息的对象，并在 style 属性中引用它：
+
+```jsx
+const Header = () => {
+  const myStyle = {
+    color: "white",
+    backgroundColor: "DodgerBlue",
+    padding: "10px",
+    fontFamily: "Sans-Serif"
+  };
+  return (
+    <>
+      <h1 style={myStyle}>Hello Style!</h1>
+      <p>Add a little style!</p>
+    </>
+  );
+}
+```
+
+### css样式表
+
+您可以在单独的文件中编写 CSS 样式，只需使用`.css`文件扩展名保存该文件 ，然后将其导入到您的应用程序中。
+
+```css
+body {
+  background-color: #282c34;
+  color: white;
+  padding: 40px;
+  font-family: Sans-Serif;
+  text-align: center;
+}
+```
+
+在您的应用程序中导入样式表：
+
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './App.css';
+
+const Header = () => {
+  return (
+    <>
+      <h1>Hello Style!</h1>
+      <p>Add a little style!.</p>
+    </>
+  );
+}
+
+ReactDOM.render(<Header />, document.getElementById('root'));
+```
+
+
+
+### css模块
+
+向应用程序添加样式的另一种方法是使用 CSS 模块。
+
+CSS 模块对于放置在单独文件中的组件很方便。
+
+模块内的 CSS 仅对导入它的组件可用，您不必担心名称冲突。
+
+使用`.module.css` 扩展名创建 CSS 模块，例如：`my-style.module.css`.
+
+```css
+.bigblue {
+  color: DodgerBlue;
+  padding: 40px;
+  font-family: Sans-Serif;
+  text-align: center;
+}
+```
+
+在组件中导入样式表
+
+```jsx
+import styles from './my-style.module.css'; 
+
+const Car = () => {
+  return <h1 className={styles.bigblue}>Hello Car!</h1>;
+}
+
+export default Car;
+```
+
+## 使用sass预处理器
+
+如果你`create-react-app`在你的项目中使用了，你可以很容易地在你的 React 项目中安装和使用 Sass。
+
+通过在终端中运行以下命令来安装 Sass：
+
+```shell
+npm i sass -D
+```
+
+现在您就可以正常在项目里使用sass文件了
+
+创建my-sass.scss文件：
+
+```sass
+$myColor: red;
+
+h1 {
+  color: $myColor;
+}
+```
+
+用与导入 CSS 文件相同的方式导入 Sass 文件：
+
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom';
+import './my-sass.scss';
+
+const Header = () => {
+  return (
+    <>
+      <h1>Hello Style!</h1>
+      <p>Add a little style!.</p>
+    </>
+  );
+}
+
+ReactDOM.render(<Header />, document.getElementById('root'));
+```
+
+## React Hooks
+
+Hooks 在 16.8 版本中被添加到 React。
+
+Hooks 允许函数组件访问状态和其他 React 特性。因此，通常不再需要类组件。
+
+### 什么是Hooks钩子
+
+Hooks 允许我们“挂钩”到 React 特性，例如状态和生命周期方法。
+
+```jsx
+import React, { useState } from "react";
+import ReactDOM from "react-dom";
+
+function FavoriteColor() {
+  const [color, setColor] = useState("red");
+
+  return (
+    <>
+      <h1>My favorite color is {color}!</h1>
+      <button
+        type="button"
+        onClick={() => setColor("blue")}
+      >Blue</button>
+      <button
+        type="button"
+        onClick={() => setColor("red")}
+      >Red</button>
+      <button
+        type="button"
+        onClick={() => setColor("pink")}
+      >Pink</button>
+      <button
+        type="button"
+        onClick={() => setColor("green")}
+      >Green</button>
+    </>
+  );
+}
+
+ReactDOM.render(<FavoriteColor />, document.getElementById('root'));
+```
+
+必须要从`react` `import`钩子（Hooks）
+
+要想跟踪组件或者页面的数据状态，可以使用`useState` 钩子
+
+类似于`vue`组件中的data，`react`里面的状态一般是指组建的数据或者属性。
+
+#### Hooks规则
+
+钩子有3条规则：
+
+- 钩子 只能在 React 函数组件内部调用。
+- 钩子只能在组件的顶层调用。
+- 钩子不能有条件
+
+**注意：**钩子在 React 类组件中不起作用。
+
+### useState Hook
+
+React `useState`Hook 允许我们跟踪函数组件中的状态。
+
+状态通常是指需要在应用程序中跟踪的数据或属性。
+
+#### import useState
+
+要使用`useState`Hook，我们首先需要将`import`它添加到我们的组件中。
+
+```jsx
+import { useState } from "react";
+```
+
+请注意，我们正在解构`useState`，`react`因为它是一个命名导出。
+
+#### 初始化 useState
+
+我们通过调用`useState`我们的函数组件来初始化我们的状态。
+
+`useState` 接受初始状态并返回两个值：
+
+- 当前状态。
+- 更新状态的函数。
+
+```jsx
+import { useState } from "react";
+
+function FavoriteColor() {
+  const [color, setColor] = useState("");
+}
+```
+
+注意，useState返回的是一个数组，数组长度是2
+
+第一个值`color`是我们当前的状态。
+
+第二个值`setColor`是用于更新状态的函数。
+
+将初始状态设置为空字符串： `useState("")`
+
+#### 使用状态
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+function FavoriteColor() {
+  const [color, setColor] = useState("red");
+
+  return <h1>My favorite color is {color}!</h1>
+}
+
+ReactDOM.render(<FavoriteColor />, document.getElementById('root'));
+```
+
+#### 更新状态
+
+为了更新我们的状态，我们使用我们的状态更新器功能
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+function FavoriteColor() {
+  const [color, setColor] = useState("red");
+
+  return (
+    <>
+      <h1>My favorite color is {color}!</h1>
+      <button
+        type="button"
+        onClick={() => setColor("blue")}
+      >Blue</button>
+    </>
+  )
+}
+```
+
+注意：永远不应该直接更新状态。例如：`color = "red"`不允许。
+
+#### 状态定义
+
+该`useState`挂钩可以用来跟踪字符串，数字，布尔值，数组，对象，以及它们的任意组合！
+
+我们可以创建多个状态挂钩来跟踪单个值。
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+function Car() {
+  const [brand, setBrand] = useState("Ford");
+  const [model, setModel] = useState("Mustang");
+  const [year, setYear] = useState("1964");
+  const [color, setColor] = useState("red");
+
+  return (
+    <>
+      <h1>My {brand}</h1>
+      <p>
+        It is a {color} {model} from {year}.
+      </p>
+    </>
+  )
+}
+
+ReactDOM.render(<Car />, document.getElementById('root'));
+```
+
+或者，可以只使用一种状态并包含一个对象！
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+function Car() {
+  const [car, setCar] = useState({
+    brand: "Ford",
+    model: "Mustang",
+    year: "1964",
+    color: "red"
+  });
+
+  return (
+    <>
+      <h1>My {car.brand}</h1>
+      <p>
+        It is a {car.color} {car.model} from {car.year}.
+      </p>
+    </>
+  )
+}
+
+ReactDOM.render(<Car />, document.getElementById('root'));
+```
+
+#### 更新对象和数组
+
+当状态更新时，整个状态都会被覆盖。
+
+如果我们只想更新我们汽车的颜色怎么办？
+
+如果我们只调用`setCar({color: "blue"})`，这将从我们的状态中删除品牌、型号和年份。
+
+我们可以使用 JavaScript 展开运算符来帮助我们。
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+function Car() {
+  const [car, setCar] = useState({
+    brand: "Ford",
+    model: "Mustang",
+    year: "1964",
+    color: "red"
+  });
+
+  const updateColor = () => {
+    setCar(previousState => {
+      return { ...previousState, color: "blue" }
+    });
+  }
+
+  return (
+    <>
+      <h1>My {car.brand}</h1>
+      <p>
+        It is a {car.color} {car.model} from {car.year}.
+      </p>
+      <button
+        type="button"
+        onClick={updateColor}
+      >Blue</button>
+    </>
+  )
+}
+
+ReactDOM.render(<Car />, document.getElementById('root'));
+```
+
+因为我们需要 state 的当前值，所以我们将一个函数传递给我们的`setCar`函数。此函数接收先前的值。
+
+然后我们返回一个对象，展开`previousState`并只覆盖颜色。
+
+### useEffect Hook
+
+该`useEffect`挂钩，可以在您的组件执行的副作用。
+
+副作用一般指的是：获取数据、直接更新 DOM 和计时器。
+
+`useEffect`接受两个参数。第二个参数是可选的。
+
+```js
+useEffect(<function>, <dependency>)
+```
+
+以计时器为例：
+
+```jsx
+import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
+
+function Timer() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCount((count) => count + 1);
+    }, 1000);
+  });
+
+  return <h1>I've rendered {count} times!</h1>;
+}
+
+ReactDOM.render(<Timer />, document.getElementById('root'));
+```
+
+`useEffect`在每个渲染上运行。这意味着当计数改变时，渲染发生，然后触发另一个效果。
+
+这不是我们想要的。有几种方法可以控制副作用何时发生。
+
+我们应该始终包含接受数组的第二个参数。我们可以选择将依赖项传递给`useEffect`这个数组。
+
+1.没有依赖通过：
+
+```jsx
+useEffect(() => {
+  //每次渲染都会执行
+});
+```
+
+2.空数组
+
+```jsx
+useEffect(() => {
+  //第一次渲染才会执行
+}, []);
+```
+
+3.传递prop或者state
+
+```jsx
+useEffect(() => {
+  //第一次渲染执行
+  //依赖发生改变都会触发执行
+}, [prop, state]);
+```
