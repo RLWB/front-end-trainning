@@ -1606,3 +1606,118 @@ const expensiveCalculation = (num) => {
 
 ReactDOM.render(<App />, document.getElementById('root'));
 ```
+
+## React Router
+
+Create React App 不包括页面路由。
+
+React Router 是最流行的解决方案。
+
+### 添加路由
+
+要在您的应用程序中添加 React Router，请从应用程序的根目录在终端中运行它：
+
+```shell
+npm i react-router-dom
+```
+
+注意：目前最新得React Router是v6，网上查询文档的时候注意版本号，不同版本路由配置和使用会有不同。
+
+### 文件夹结构
+
+要创建具有多个页面路由的应用程序，让我们首先从文件结构开始。
+
+在该`src`文件夹中，我们将创建一个以`pages`多个文件命名的文件夹 ：
+
+`src\pages\`：
+
+- `Layout.js`
+- `Home.js`
+- `Blogs.js`
+- `Contact.js`
+- `NoPage.js`
+
+每个文件将包含一个非常基本的 React 组件。
+
+### 基本用法
+
+在`index.js`文件中使用路由器。
+
+```jsx
+import ReactDOM from "react-dom";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Layout from "./pages/Layout";
+import Home from "./pages/Home";
+import Blogs from "./pages/Blogs";
+import Contact from "./pages/Contact";
+import NoPage from "./pages/NoPage";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Layout />}>
+          <Route index element={<Home />} />
+          <Route path="blogs" element={<Blogs />} />
+          <Route path="contact" element={<Contact />} />
+          <Route path="*" element={<NoPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById("root"));
+```
+
+### 示例说明
+
+最外层使用<BrowserRouter>包裹内容。
+
+然后定义<Routes>.一个应用程序可以有多个<Routes>.这里我们只是用了一个。
+
+<Route>可以嵌套。path属性代表路径，element绑定要渲染的组件。
+
+### 页面/组件
+
+`Layout`组件具有 `<Outlet>`和`<Link>`元素。
+
+`<Outlet>`呈现当前选定path的内容。
+
+`<Link>` 用于设置 URL 并跟踪浏览历史记录。
+
+任何时候我们链接到内部路径时，我们都会使用`<Link>` 代替`<a href="">`。
+
+“布局路由”是一个共享组件，它在所有页面上插入通用内容，例如导航菜单。
+
+Layout.js
+
+```jsx
+import { Outlet, Link } from "react-router-dom";
+
+const Layout = () => {
+  return (
+    <>
+      <nav>
+        <ul>
+          <li>
+            <Link to="/">Home</Link>
+          </li>
+          <li>
+            <Link to="/blogs">Blogs</Link>
+          </li>
+          <li>
+            <Link to="/contact">Contact</Link>
+          </li>
+        </ul>
+      </nav>
+
+      <Outlet />
+    </>
+  )
+};
+
+export default Layout;
+```
+
+Home.js,Blogs.js,Contact.js,NoPage.js都是基本的组件。
