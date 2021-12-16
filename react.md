@@ -1036,3 +1036,573 @@ useEffect(() => {
   //依赖发生改变都会触发执行
 }, [prop, state]);
 ```
+
+仅在初始渲染上运行效果：
+
+```jsx
+import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
+
+function Timer() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    setTimeout(() => {
+      setCount((count) => count + 1);
+    }, 1000);
+  } []); // <-  添加一个空的中括号
+
+  return <h1>I've rendered {count} times!</h1>;
+}
+
+ReactDOM.render(<Timer />, document.getElementById('root'));
+```
+
+`useEffect`依赖于变量的Hook的示例。如果`count`变量更新，效果将再次运行：
+
+```jsx
+import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
+
+function Counter() {
+  const [count, setCount] = useState(0);
+  const [calculation, setCalculation] = useState(0);
+
+  useEffect(() => {
+    setCalculation(() => count * 2);
+  }, [count]); // 添加count变量
+
+  return (
+    <>
+      <p>Count: {count}</p>
+      <button onClick={() => setCount((c) => c + 1)}>+</button>
+      <p>Calculation: {calculation}</p>
+    </>
+  );
+}
+
+ReactDOM.render(<Counter />, document.getElementById('root'));
+```
+
+如果存在多个依赖项，则应将它们包含在`useEffect`依赖项数组中。
+
+#### effect清理
+
+某些副作用需要清理以减少内存泄漏
+
+定时器，订阅事件，事件监听器和其他一些不在需要的副作用应该被处理掉。
+
+通过在`useEffect`Hook的末尾包含一个返回函数来做到这一点。
+
+清理`useEffect`Hook末尾的计时器：
+
+```jsx
+import { useState, useEffect } from "react";
+import ReactDOM from "react-dom";
+
+function Timer() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let timer = setTimeout(() => {
+    setCount((count) => count + 1);
+  }, 1000);
+
+  return () => clearTimeout(timer)
+  }, []);
+
+  return <h1>I've rendered {count} times!</h1>;
+}
+
+ReactDOM.render(<Timer />, document.getElementById("root"));
+```
+
+**注意：**指定要清除的定时器名称即可
+
+### useContext Hook
+
+#### 上下文
+
+React Context 是一种全局管理状态的方法。
+
+它可以与`useState`Hook一起使用，比`useState`单独使用更容易在深度嵌套的组件之间共享状态。
+
+通过嵌套传递props
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+function Component1() {
+  const [user, setUser] = useState("Jesse Hall");
+
+  return (
+    <>
+      <h1>{`Hello ${user}!`}</h1>
+      <Component2 user={user} />
+    </>
+  );
+}
+
+function Component2({ user }) {
+  return (
+    <>
+      <h1>Component 2</h1>
+      <Component3 user={user} />
+    </>
+  );
+}
+
+function Component3({ user }) {
+  return (
+    <>
+      <h1>Component 3</h1>
+      <Component4 user={user} />
+    </>
+  );
+}
+
+function Component4({ user }) {
+  return (
+    <>
+      <h1>Component 4</h1>
+      <Component5 user={user} />
+    </>
+  );
+}
+
+function Component5({ user }) {
+  return (
+    <>
+      <h1>Component 5</h1>
+      <h2>{`Hello ${user} again!`}</h2>
+    </>
+  );
+}
+
+ReactDOM.render(<Component1 />, document.getElementById("root"));
+```
+
+即使组件 2-4 不需要状态，它们也必须传递状态以便它可以到达组件 5。
+
+#### 解决方案
+
+创建上下文
+
+要创建上下文，您必须导入`createContext`并初始化它：
+
+```jsx
+import { useState, createContext } from "react";
+import ReactDOM from "react-dom";
+
+const UserContext = createContext()
+```
+
+接下来，我们将使用 Context Provider 来包装需要状态 Context 的组件树。
+
+上下文中的provider
+
+将子组件包装在 Context Provider 中并提供状态值。
+
+```jsx
+function Component1() {
+  const [user, setUser] = useState("Jesse Hall");
+
+  return (
+    <UserContext.Provider value={user}>
+      <h1>{`Hello ${user}!`}</h1>
+      <Component2 user={user} />
+    </UserContext.Provider>
+  );
+}
+```
+
+现在，此树中的所有组件都可以访问用户上下文。
+
+使用`useContext`钩子
+
+为了在子组件中使用 Context，我们需要使用`useContext`Hook访问它。
+
+首先，`useContext`在导入语句中包含：
+
+```jsx
+import { useState, createContext, useContext } from "react";
+```
+
+然后就可以在所有组件中访问用户上下文：
+
+```jsx
+function Component5() {
+  const user = useContext(UserContext);
+
+  return (
+    <>
+      <h1>Component 5</h1>
+      <h2>{`Hello ${user} again!`}</h2>
+    </>
+  );
+}
+```
+
+使用 React Context 的完整示例：
+
+```jsx
+import { useState, createContext, useContext } from "react";
+import ReactDOM from "react-dom";
+
+const UserContext = createContext();
+
+function Component1() {
+  const [user, setUser] = useState("Jesse Hall");
+
+  return (
+    <UserContext.Provider value={user}>
+      <h1>{`Hello ${user}!`}</h1>
+      <Component2 user={user} />
+    </UserContext.Provider>
+  );
+}
+
+function Component2() {
+  return (
+    <>
+      <h1>Component 2</h1>
+      <Component3 />
+    </>
+  );
+}
+
+function Component3() {
+  return (
+    <>
+      <h1>Component 3</h1>
+      <Component4 />
+    </>
+  );
+}
+
+function Component4() {
+  return (
+    <>
+      <h1>Component 4</h1>
+      <Component5 />
+    </>
+  );
+}
+
+function Component5() {
+  const user = useContext(UserContext);
+
+  return (
+    <>
+      <h1>Component 5</h1>
+      <h2>{`Hello ${user} again!`}</h2>
+    </>
+  );
+}
+
+ReactDOM.render(<Component1 />, document.getElementById("root"));
+```
+
+### useRef Hook
+
+用于存储更新时不会导致重新渲染的可变值。
+
+也可用于直接访问 DOM 元素。
+
+#### 不会导致重新渲染
+
+如果我们试图计算我们的应用程序使用`useState`Hook渲染的次数，我们将陷入无限循环，因为这个 Hook 本身会导致重新渲染。
+
+为了避免这种情况，我们可以使用`useRef`Hook。
+
+```jsx
+import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+
+function App() {
+  const [inputValue, setInputValue] = useState("");
+  const count = useRef(0);
+
+  useEffect(() => {
+    count.current = count.current + 1;
+  });
+
+  return (
+    <>
+      <input
+        type="text"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+      />
+      <h1>Render Count: {count.current}</h1>
+    </>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+`useRef()`只返回一项。它返回一个名为`current` 的对象。
+
+这就像这样：`const count = {current: 0}`。我们可以使用`count.current`.
+
+#### 访问DOM元素
+
+一般来说，我们希望让 React 处理所有的 DOM 操作。
+
+在 React 中，我们可以`ref`向元素添加属性以直接在 DOM 中访问它。
+
+```jsx
+import { useRef } from "react";
+import ReactDOM from "react-dom";
+
+function App() {
+  const inputElement = useRef();
+
+  const focusInput = () => {
+    inputElement.current.focus();
+  };
+
+  return (
+    <>
+      <input type="text" ref={inputElement} />
+      <button onClick={focusInput}>Focus Input</button>
+    </>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+#### 跟踪状态变化
+
+该`useRef` Hook也可以用于跟踪以前的状态值。
+
+这是因为我们能够使用`useRef`在渲染之间保持原来的值。
+
+```jsx
+import { useState, useEffect, useRef } from "react";
+import ReactDOM from "react-dom";
+
+function App() {
+  const [inputValue, setInputValue] = useState("");
+  const previousInputValue = useRef("");
+
+  useEffect(() => {
+    previousInputValue.current = inputValue;
+  }, [inputValue]);
+
+  return (
+    <>
+      <input
+        type="text"
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+      />
+      <h2>Current Value: {inputValue}</h2>
+      <h2>Previous Value: {previousInputValue.current}</h2>
+    </>
+  );
+}
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+### useCallback Hook
+
+React `useCallback`Hook 返回一个记忆化的回调函数。
+
+注意：将记忆化视为缓存一个值，这样它就不需要重新计算。
+
+这使我们能够隔离资源密集型函数，以便它们不会在每次渲染时自动运行。
+
+当依赖有更新的时候，才会执行`useCallback` Hook
+
+这可以提高性能。
+
+#### 用法
+
+使用useCallback可以防止组件重新渲染，除非props发生变化。
+
+以下例子，Todos组件不会重新渲染：
+
+index.js:
+
+```jsx
+import { useState, useCallback } from "react";
+import ReactDOM from "react-dom";
+import Todos from "./Todos";
+
+const App = () => {
+  const [count, setCount] = useState(0);
+  const [todos, setTodos] = useState([]);
+
+  const increment = () => {
+    setCount((c) => c + 1);
+  };
+  const addTodo = useCallback(() => {
+    setTodos((t) => [...t, "New Todo"]);
+  }, [todos]);
+
+  return (
+    <>
+      <Todos todos={todos} addTodo={addTodo} />
+      <hr />
+      <div>
+        Count: {count}
+        <button onClick={increment}>+</button>
+      </div>
+    </>
+  );
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+Todos.js:
+
+```jsx
+import { memo } from "react";
+
+const Todos = ({ todos, addTodo }) => {
+  console.log("child render");
+  return (
+    <>
+      <h2>My Todos</h2>
+      {todos.map((todo, index) => {
+        return <p key={index}>{todo}</p>;
+      })}
+      <button onClick={addTodo}>Add Todo</button>
+    </>
+  );
+};
+
+export default memo(Todos);
+```
+
+现在`Todos`组件只会在`todos`prop 改变时重新渲染。
+
+### useMemo Hook
+
+`useMemo`Hook 返回一个记忆值。
+
+注意：将记忆化视为缓存一个值，这样它就不需要重新计算。
+
+当依赖更新的时候就会触发`useMemo` Hook
+
+这可以提高性能.
+
+注意：`useMemo`和`useCallback`Hooks 是相似的。主要区别在于`useMemo`返回一个记忆值并 `useCallback`返回一个记忆函数.
+
+#### 性能
+
+使用`useMemo` Hook 可以处理不必要的资源密集型功能。
+
+下面这个例子，在每次渲染上都会运行`expensiveCalculation`函数
+
+更改计数或添加待办事项时，你会注意到执行延迟。
+
+```jsx
+import { useState } from "react";
+import ReactDOM from "react-dom";
+
+const App = () => {
+  const [count, setCount] = useState(0);
+  const [todos, setTodos] = useState([]);
+  const calculation = expensiveCalculation(count);
+
+  const increment = () => {
+    setCount((c) => c + 1);
+  };
+  const addTodo = () => {
+    setTodos((t) => [...t, "New Todo"]);
+  };
+
+  return (
+    <div>
+      <div>
+        <h2>My Todos</h2>
+        {todos.map((todo, index) => {
+          return <p key={index}>{todo}</p>;
+        })}
+        <button onClick={addTodo}>Add Todo</button>
+      </div>
+      <hr />
+      <div>
+        Count: {count}
+        <button onClick={increment}>+</button>
+        <h2>Expensive Calculation</h2>
+        {calculation}
+      </div>
+    </div>
+  );
+};
+
+const expensiveCalculation = (num) => {
+  console.log("Calculating...");
+  for (let i = 0; i < 1000000000; i++) {
+    num += 1;
+  }
+  return num;
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
+
+#### 使用 useMemo
+
+为了解决这个性能问题，我们可以使用`useMemo`Hook 来记忆`expensiveCalculation`函数。这将导致该函数仅在需要时运行。
+
+我们可以使用`useMemo`包装`expensiveCalculation`函数。
+
+`useMemo`接收第二个参数来声明它的依赖。`expensiveCalculation`函数只在依赖发生变化时执行。
+
+在以下示例中，`expensiveCalculation`函数只会在`count` 更改时运行，而不会在添加待办事项时运行。
+
+```jsx
+import { useState, useMemo } from "react";
+import ReactDOM from "react-dom";
+
+const App = () => {
+  const [count, setCount] = useState(0);
+  const [todos, setTodos] = useState([]);
+  const calculation = useMemo(() => expensiveCalculation(count), [count]);
+
+  const increment = () => {
+    setCount((c) => c + 1);
+  };
+  const addTodo = () => {
+    setTodos((t) => [...t, "New Todo"]);
+  };
+
+  return (
+    <div>
+      <div>
+        <h2>My Todos</h2>
+        {todos.map((todo, index) => {
+          return <p key={index}>{todo}</p>;
+        })}
+        <button onClick={addTodo}>Add Todo</button>
+      </div>
+      <hr />
+      <div>
+        Count: {count}
+        <button onClick={increment}>+</button>
+        <h2>Expensive Calculation</h2>
+        {calculation}
+      </div>
+    </div>
+  );
+};
+
+const expensiveCalculation = (num) => {
+  console.log("Calculating...");
+  for (let i = 0; i < 1000000000; i++) {
+    num += 1;
+  }
+  return num;
+};
+
+ReactDOM.render(<App />, document.getElementById('root'));
+```
