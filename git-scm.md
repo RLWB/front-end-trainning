@@ -89,7 +89,7 @@ Git 有多种使用方式。 你可以使用原生的命令行模式，也可以
 
 #### windows安装
 
-官网下载，打开https://git-scm.com/download/win，就可以自动开始下载。下载完成之后，直接按提示安装就可以了。
+官网下载速度很慢，推荐使用淘宝的镜像。打开https://registry.npmmirror.com/binary.html?path=git-for-windows/就可以自动开始下载。下载完成之后，直接按提示安装就可以了。
 
 ### 1.7 初次使用git前配置
 
